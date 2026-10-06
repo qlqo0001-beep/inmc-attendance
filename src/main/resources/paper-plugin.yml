@@ -1,0 +1,30 @@
+name: inmc-attendance
+version: '${version}'
+main: com.inmc.attendance.AttendancePlugin
+api-version: '${apiVersion}'
+description: INMC 출석체크 단독 플러그인 - inmc-core 없이 동작 (Paper 26.1+)
+authors: [ INMC ]
+website: https://inmc.example
+
+# inmc-core 의존 없음. Vault/PlaceholderAPI는 있으면 쓰고 없어도 돈다.
+dependencies:
+  server:
+    Vault:          { load: OMIT, required: false, join-classpath: true }
+    PlaceholderAPI: { load: OMIT, required: false, join-classpath: true }
+    MMOItems:       { load: OMIT, required: false, join-classpath: true }
+    MythicLib:      { load: OMIT, required: false, join-classpath: true }
+
+permissions:
+  inmcattendance.use:
+    description: /출석 열기
+    default: true
+  inmcattendance.admin:
+    description: /출석 관리 · /출석 초기화 · /출석 리로드
+    default: op
+  # 구 inmc-menu 권한도 코드에서 함께 인정한다 (기존 권한 설정 호환).
+  inmcmenu.attendance:
+    description: (호환용) /출석 열기
+    default: true
+  inmcmenu.admin:
+    description: (호환용) 출석 관리
+    default: op

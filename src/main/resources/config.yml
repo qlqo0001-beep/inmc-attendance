@@ -1,0 +1,13 @@
+# inmc-attendance 설정. 게임 안 /출석 관리 > 하루 경계 에서 고치는 것이 편합니다.
+# 출석판은 attendance/ 폴더 — /출석 관리 에서 고치세요.
+# inmc-menu 에서 옮겨올 때는 inmc-menu/attendance/ 와 inmc-menu/attendance-data/ 를
+# 그대로 복사해 이 플러그인 폴더에 덮어쓰면 기록·보상이 이어집니다.
+
+# 출석(/출석)
+attendance:
+  # 하루를 세는 시간대
+  timezone: "Asia/Seoul"
+  # 날이 바뀌는 시각(0~23시). 0 = 자정
+  reset-hour: 0
+  # 수동 출석판을 아직 안 눌렀으면 들어올 때·날이 바뀔 때 알립니다
+  remind: true
