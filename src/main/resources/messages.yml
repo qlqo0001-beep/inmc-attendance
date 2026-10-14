@@ -9,7 +9,6 @@ no-permission: "<red>권한이 없습니다.</red>"
 reloaded: "<green>다시 불러왔습니다. 출석판 {count}개.</green>"
 invalid-id: "<red>이름은 소문자 영문·숫자·한글·_- 만, 32자까지입니다: {value}</red>"
 already-exists: "<red>'{value}' 은(는) 이미 있습니다.</red>"
-hand-empty: "<red>손에 아이템을 들고 누르세요.</red>"
 
 # --- 출석 ---
 attend-none: "<gray>지금 열린 출석판이 없습니다.</gray>"

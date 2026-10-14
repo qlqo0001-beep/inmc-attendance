@@ -46,6 +46,12 @@ public abstract class Menu implements InventoryHolder {
 
     public boolean acceptsShiftInsert() { return false; }
 
+    /**
+     * 열린 화면 아래의 <b>내 가방 칸</b>을 눌렀다 — 화면이 그 아이템을 쓰면 true(사건은 취소되고 아이템은 제자리). 기본은 false.
+     * inmc-core {@code Menu.onPlayerInventoryClick} 과 같은 약속(2026-10-14) — 아이템 올리기 화면이 쓴다. 사본만 쓰고 가방에서 빼지 않는다.
+     */
+    public boolean onPlayerInventoryClick(InventoryClickEvent event) { return false; }
+
     public void onDrag(InventoryDragEvent event) {
         boolean touchesLocked = event.getRawSlots().stream()
                 .anyMatch(s -> s < size() && !isSlotEditable(s));
@@ -56,6 +62,10 @@ public abstract class Menu implements InventoryHolder {
         int raw = event.getRawSlot();
         boolean inTop = raw >= 0 && raw < size();
         if (!inTop) {
+            if (onPlayerInventoryClick(event)) {
+                event.setCancelled(true);
+                return;
+            }
             if (event.isShiftClick() && !acceptsShiftInsert()) event.setCancelled(true);
             return;
         }

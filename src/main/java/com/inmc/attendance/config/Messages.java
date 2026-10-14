@@ -60,7 +60,6 @@ public final class Messages {
         Map.entry("reloaded", "<green>다시 불러왔습니다. 출석판 {count}개.</green>"),
         Map.entry("invalid-id", "<red>이름은 소문자 영문·숫자·한글·_- 만, 32자까지입니다: {value}</red>"),
         Map.entry("already-exists", "<red>'{value}' 은(는) 이미 있습니다.</red>"),
-        Map.entry("hand-empty", "<red>손에 아이템을 들고 누르세요.</red>"),
         Map.entry("attend-none", "<gray>지금 열린 출석판이 없습니다.</gray>"),
         Map.entry("attend-loading", "<gray>출석 기록을 읽는 중입니다 — 잠시 뒤에 다시 눌러 주세요.</gray>"),
         Map.entry("attend-wait", "<gray>오늘 {count}분 더 접속하면 출석할 수 있습니다.</gray>"),

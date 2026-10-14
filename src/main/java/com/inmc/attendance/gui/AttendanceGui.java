@@ -22,6 +22,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.Consumer;
 
 /** 출석 GUI 일체. inmc-menu AttendanceMenus.kt의 Java·무코어 이식판 (입력은 Paper Dialog). */
 public final class AttendanceGui {
@@ -454,15 +455,13 @@ public final class AttendanceGui {
                         () -> new BoardEditorMenu(viewer, boardId).open(),
                         (p, v) -> save(x -> x.withName(v.text("name").isBlank() ? x.id() : v.text("name")))));
             set(11, Icons.named(safeIcon(b.icon()), "<yellow>그림</yellow>",
-                    List.of("<gray>고르기 화면의 그림.</gray>", "", "<yellow>▶ 클릭: 손에 든 것으로</yellow>"), viewer),
-                    e -> {
-                        ItemStack hand = viewer.getInventory().getItemInMainHand();
-                        if (hand.getType().isAir()) {
-                            plugin.messages().send(viewer, "hand-empty");
-                            return;
-                        }
-                        save(x -> x.withIcon(hand.getType()));
-                    });
+                    List.of("<gray>고르기 화면의 그림.</gray>", "", "<yellow>▶ 클릭: 아이템 올리기</yellow>"), viewer),
+                    e -> new ItemInputMenu(viewer, "출석판 그림", List.of("<gray>고르기 화면의 그림(재질만 씁니다).</gray>"), safeIcon(b.icon()),
+                            () -> new BoardEditorMenu(viewer, boardId).open(),
+                            item -> {
+                                save(x -> x.withIcon(item.getType()));
+                                new BoardEditorMenu(viewer, boardId).open();
+                            }).open());
             set(12, Icons.of(Icons.toggleMaterial(b.enabled()), "<yellow>켜짐: </yellow>" + Icons.toggle(b.enabled()), viewer,
                     "<gray>끄면 화면에도 안 나오고 출석도 안 됩니다.</gray>"),
                     e -> save(x -> x.withEnabled(!x.enabled())));
@@ -773,6 +772,82 @@ public final class AttendanceGui {
 
         @Override
         public void onClose(InventoryCloseEvent event) { persist(); }
+    }
+
+    // --- 아이템 올리기 ---
+
+    /**
+     * 아이템 올리기 — "손에 든 것으로 정하기" 를 대신한다(사용자 요청 2026-10-14). inmc-core 의 {@code ItemInputMenu} 와 같은 모양·같은 동작을
+     * 이 플러그인 안에 둔다(이 플러그인은 inmc-core 없이 돈다). 가운데 칸에 가방의 아이템을 누르거나 커서로 집은 아이템을 놓으면 그 사본이 올라가고,
+     * [등록] 을 누르면 onSubmit 이 받는다. 아이템은 옮기지 않는다 — 관리자 가방·커서의 것은 그대로라 창을 닫아도 잃는 것이 없다.
+     */
+    final class ItemInputMenu extends Menu {
+        static final int SLOT_ITEM = 13;
+        static final int SLOT_SUBMIT = 15;
+        static final int SLOT_BACK = 18;
+        private final List<String> hint;
+        private final Runnable back;
+        private final Consumer<ItemStack> onSubmit;
+        private ItemStack placed;
+
+        ItemInputMenu(Player viewer, String title, List<String> hint, ItemStack initial, Runnable back, Consumer<ItemStack> onSubmit) {
+            super(AttendanceGui.this, viewer, 27, "<dark_gray>" + title + "</dark_gray>");
+            this.hint = hint;
+            this.back = back;
+            this.onSubmit = onSubmit;
+            this.placed = initial == null || initial.getType().isAir() ? null : initial.clone();
+        }
+
+        @Override
+        public void draw() {
+            clear();
+            if (placed == null) {
+                List<String> lore = new ArrayList<>(hint);
+                lore.addAll(List.of("", "<gray>아래 <white>내 가방의 아이템을 클릭</white>하거나,</gray>",
+                        "<gray>아이템을 집어 이 칸에 놓으면 올라갑니다.</gray>", "<dark_gray>가방의 아이템은 빠지지 않습니다(사본).</dark_gray>"));
+                set(SLOT_ITEM, Icons.of(Material.LIGHT_GRAY_STAINED_GLASS_PANE, "<yellow>여기에 아이템을 올리세요</yellow>", lore, viewer), this::takeCursor);
+            } else {
+                ItemStack shown = placed.clone();
+                shown.editMeta(meta -> {
+                    List<Component> lore = meta.lore() == null ? new ArrayList<>() : new ArrayList<>(meta.lore());
+                    lore.addAll(TextUtil.renderLore(List.of("", "<gray>다른 아이템을 클릭하면 바꿉니다.</gray>", "<red>▶ 우클릭: 내리기</red>"), null, viewer));
+                    meta.lore(lore);
+                });
+                set(SLOT_ITEM, shown, e -> {
+                    if (e.isRightClick() && e.getCursor().getType().isAir()) {
+                        placed = null;
+                        refresh();
+                    } else {
+                        takeCursor(e);
+                    }
+                });
+            }
+            if (placed == null) {
+                set(SLOT_SUBMIT, Icons.of(Material.GRAY_DYE, "<gray>등록</gray>", viewer, "<gray>먼저 아이템을 올리세요.</gray>"));
+            } else {
+                set(SLOT_SUBMIT, Icons.of(Material.LIME_DYE, "<green>✔ 등록</green>", viewer, "<yellow>▶ 클릭: 올린 아이템으로 등록</yellow>"),
+                        e -> onSubmit.accept(placed.clone()));
+            }
+            if (back != null) set(SLOT_BACK, Icons.back(), e -> back.run());
+            fillEmpty(Icons.filler());
+        }
+
+        /** 가운데 칸을 커서에 든 아이템으로 눌렀다 — 커서는 그대로 두고 사본을 올린다. */
+        private void takeCursor(InventoryClickEvent event) {
+            ItemStack cursor = event.getCursor();
+            if (cursor.getType().isAir()) return;
+            placed = cursor.clone();
+            refresh();
+        }
+
+        @Override
+        public boolean onPlayerInventoryClick(InventoryClickEvent event) {
+            ItemStack clicked = event.getCurrentItem();
+            if (clicked == null || clicked.getType().isAir() || !event.getCursor().getType().isAir()) return false;
+            placed = clicked.clone();
+            refresh();
+            return true;
+        }
     }
 
     // --- 확인창 ---
