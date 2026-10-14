@@ -11,6 +11,12 @@
 - 메시지 `hand-empty` 를 뺐다(부르는 곳이 없어졌다). 서버의 `messages.yml` 에 남아 있어도 해가 없다.
 - 보상 화면(칸에 올려놓는 방식)은 그대로.
 
+## 미배포 — 돈 보상이 일부 경제 플러그인에서 조용히 안 나가던 것
+
+- Vault 메서드를 공급자 **구현 클래스**에서 찾고 있었다. 구현 클래스가 공개(public)가 아닌 경제 플러그인이면 invoke 가
+  `IllegalAccessException` 을 내고, 잡혀서 아무 말 없이 돈이 안 나갔다. 공개 인터페이스 `net.milkbowl.vault.economy.Economy`
+  에서 찾는다(inmc-economy 의 공급자는 공개라 테섭에서는 드러나지 않았다)
+
 ## 2026-10-06 — 워크스페이스 모듈 경로
 
 - 소스 폴더 이름이 `출첵플긴/` 으로 정해졌다(Gradle 경로는 `:attendance`, jar 이름은 그대로 `inmc-attendance-1.0.0.jar`).

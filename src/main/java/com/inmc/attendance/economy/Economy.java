@@ -14,6 +14,11 @@ public final class Economy {
 
     private final Logger logger;
     private Object cached;
+    /**
+     * Vault 의 공개 인터페이스. 메서드는 여기서 찾는다 — 공급자 구현 클래스가 공개(public)가 아니면
+     * 그 클래스에서 찾은 메서드는 invoke 가 IllegalAccessException 을 내 지급이 조용히 실패한다.
+     */
+    private Class<?> api;
     private boolean logged;
 
     public Economy(Logger logger) { this.logger = logger; }
@@ -28,7 +33,7 @@ public final class Economy {
         Object eco = find();
         if (eco == null) return false;
         try {
-            Object r = eco.getClass().getMethod("depositPlayer", OfflinePlayer.class, double.class)
+            Object r = api.getMethod("depositPlayer", OfflinePlayer.class, double.class)
                     .invoke(eco, player, amount);
             return (boolean) r.getClass().getMethod("transactionSuccess").invoke(r);
         } catch (Throwable t) {
@@ -40,7 +45,7 @@ public final class Economy {
         Object eco = find();
         if (eco != null) {
             try {
-                Object s = eco.getClass().getMethod("format", double.class).invoke(eco, amount);
+                Object s = api.getMethod("format", double.class).invoke(eco, amount);
                 if (s instanceof String str && !str.isBlank()) return str;
             } catch (Throwable ignored) {}
         }
@@ -58,11 +63,12 @@ public final class Economy {
             if (reg == null) return null;
             Object provider = reg.getClass().getMethod("getProvider").invoke(reg);
             if (provider != null) {
+                api = ecoClass;
                 cached = provider;
                 if (!logged) {
                     logged = true;
                     try {
-                        String name = (String) provider.getClass().getMethod("getName").invoke(provider);
+                        String name = (String) ecoClass.getMethod("getName").invoke(provider);
                         logger.info("Vault 연동 활성화 (" + name + ")");
                     } catch (Throwable ignored) {
                         logger.info("Vault 연동 활성화");
